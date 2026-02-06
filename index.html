@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SYSTEM CRITICAL ERROR</title>
+    <style>
+        body {
+            background-color: black;
+            color: #0f0; /* Классический зеленый хакерский, можно сменить на #f00 (красный) для страха */
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            margin: 0;
+            padding: 10px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #console {
+            width: 100%;
+            height: 100%;
+            overflow-y: hidden;
+            word-wrap: break-word;
+            font-size: 14px;
+            text-shadow: 0 0 5px #0f0;
+            z-index: 1;
+        }
+
+        .alert-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: red;
+            color: white;
+            padding: 20px;
+            border: 2px solid white;
+            font-weight: bold;
+            display: none;
+            z-index: 100;
+            text-align: center;
+            box-shadow: 0 0 20px red;
+            font-size: 20px;
+        }
+
+        .glitch {
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 0, 0, 0.1);
+            pointer-events: none;
+            display: none;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body onclick="startChaos()">
+
+    <div id="console">НАЖМИТЕ НА ЭКРАН ДЛЯ ИНИЦИАЛИЗАЦИИ...</div>
+    <div id="alertBox" class="alert-box">ВНИМАНИЕ: НЕСАНКЦИОНИРОВАННЫЙ ДОСТУП!</div>
+    <div id="redOverlay" class="overlay"></div>
+
+    <script>
+        const consoleDiv = document.getElementById('console');
+        const alertBox = document.getElementById('alertBox');
+        const body = document.body;
+        const overlay = document.getElementById('redOverlay');
+        
+        let isRunning = false;
+
+        const phrases = [
+            "ПОДКЛЮЧЕНИЕ К УЗЛУ 192.168.0.1...",
+            "ВЗЛОМ БИОСА...",
+            "СКАЧИВАНИЕ ЛИЧНЫХ ДАННЫХ...",
+            "ШИФРОВАНИЕ ФАЙЛОВ...",
+            "ОБХОД БРАНДМАУЭРА...",
+            "ДОСТУП РАЗРЕШЕН",
+            "CRITICAL KERNEL PANIC",
+            "ЗАГРУЗКА ТРОЯНА...",
+            "ПОИСК БАНКОВСКИХ ПРИЛОЖЕНИЙ...",
+            "УДАЛЕНИЕ SYSTEM32...",
+            "01010101010010101010101",
+            "ERROR: MEMORY LEAK DETECTED",
+            "ПОПЫТКА ПЕРЕХВАТА УПРАВЛЕНИЯ..."
+        ];
+
+        function randomStr(length) {
+            let result = '';
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+            for ( let i = 0; i < length; i++ ) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        function startChaos() {
+            if (isRunning) return;
+            isRunning = true;
+            
+            // Запрос на полноэкранный режим для большего эффекта
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+
+            // Меняем стиль на "страшный"
+            body.style.color = "red";
+            document.getElementById('console').style.textShadow = "0 0 5px red";
+
+            // Запускаем бесконечный поток текста
+            setInterval(() => {
+                const p = document.createElement('div');
+                if (Math.random() > 0.8) {
+                    p.innerText = phrases[Math.floor(Math.random() * phrases.length)];
+                    p.style.fontWeight = "bold";
+                } else {
+                    p.innerText = randomStr(Math.floor(Math.random() * 60) + 20);
+                }
+                consoleDiv.appendChild(p);
+                window.scrollTo(0, document.body.scrollHeight);
+                
+                // Вибрация (работает на Android, на iOS может не сработать без действий пользователя)
+                if (navigator.vibrate) {
+                    navigator.vibrate(50); // короткая вибрация
+                }
+            }, 50);
+
+            // Случайные визуальные глитчи и вспышки
+            setInterval(() => {
+                body.classList.toggle('glitch');
+                overlay.style.display = (Math.random() > 0.7) ? 'block' : 'none';
+            }, 200);
+
+            // Фейковые алерты
+            setInterval(() => {
+                if(Math.random() > 0.85) {
+                    alertBox.style.display = 'block';
+                    alertBox.innerText = phrases[Math.floor(Math.random() * phrases.length)];
+                    setTimeout(() => {
+                        alertBox.style.display = 'none';
+                    }, 800);
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
