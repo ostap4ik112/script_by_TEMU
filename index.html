@@ -7,7 +7,7 @@
     <style>
         body {
             background-color: black;
-            color: red; /* Сразу ставим красный для эффекта */
+            color: red; 
             font-family: 'Courier New', Courier, monospace;
             overflow: hidden;
             margin: 0;
@@ -45,7 +45,7 @@
             font-size: 22px;
         }
 
-        /* Летающие картинки */
+        
         .flying-image {
             position: absolute;
             opacity: 0;
@@ -55,7 +55,7 @@
         }
         .flying-image.show { opacity: 1; }
 
-        /* Эффект тряски */
+        
         .glitch { animation: shake 0.2s infinite; }
         @keyframes shake {
             0% { transform: translate(2px, 2px); }
@@ -84,7 +84,7 @@
         
         let isRunning = false;
 
-        // --- НАСТРОЙКА КАРТИНОК ---
+        
         const imageUrls = [
             "photo_babai", 
             "photo_cookie", 
@@ -95,7 +95,7 @@
             "4_photo",
             "5_photo",
             "6_photo"
-            // СЮДА ПИШИ НАЗВАНИЯ СВОИХ ФАЙЛОВ ЧЕРЕЗ ЗАПЯТУЮ В КАВЫЧКАХ
+            
         ];
 
         const phrases = [
@@ -136,11 +136,11 @@
             isRunning = true;
             consoleDiv.innerHTML = "";
             
-            // Запуск звука
+            
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             playGlitchSound(audioCtx);
 
-            // Текстовый поток
+            
             setInterval(() => {
                 const p = document.createElement('div');
                 p.innerText = Math.random() > 0.8 ? phrases[Math.floor(Math.random() * phrases.length)] : Math.random().toString(36).substring(2, 15);
@@ -149,7 +149,7 @@
                 if (navigator.vibrate) navigator.vibrate(40);
             }, 60);
 
-            // Визуальный хаос
+            
             setInterval(() => {
                 body.classList.toggle('glitch');
                 overlay.style.display = (Math.random() > 0.7) ? 'block' : 'none';
@@ -159,7 +159,7 @@
                 }
             }, 200);
 
-            // Запуск картинок
+            
             setInterval(() => { if (Math.random() > 0.5) createFlyingImage(); }, 800);
         }
     </script>
