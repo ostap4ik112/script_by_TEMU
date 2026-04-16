@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SYSTEM CRITICAL ERROR</title>
+    <title>TERMINAL OVERRIDE</title>
     <style>
         body {
             background-color: black;
-            color: green; 
+            color: #ff0000; 
             font-family: 'Courier New', Courier, monospace;
             overflow: hidden;
             margin: 0;
@@ -16,6 +16,7 @@
             display: flex;
             flex-direction: column;
             user-select: none;
+            cursor: crosshair;
         }
 
         #console {
@@ -24,56 +25,59 @@
             overflow-y: hidden;
             word-wrap: break-word;
             font-size: 14px;
-            text-shadow: 0 0 5px red;
+            text-shadow: 0 0 8px red;
             z-index: 1;
+            line-height: 1.2;
         }
 
         .alert-box {
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             background: red;
             color: white;
-            padding: 20px;
-            border: 2px solid white;
+            padding: 30px;
+            border: 4px solid white;
             font-weight: bold;
             display: none;
             z-index: 100;
             text-align: center;
-            box-shadow: 0 0 30px red;
-            font-size: 22px;
+            box-shadow: 0 0 50px red;
+            font-size: 26px;
         }
 
-        
         .flying-image {
             position: absolute;
             opacity: 0;
-            transition: opacity 0.4s ease-in-out;
+            transition: opacity 0.3s ease;
             pointer-events: none;
             z-index: 2;
         }
         .flying-image.show { opacity: 1; }
 
-        
-        .glitch { animation: shake 0.2s infinite; }
+        .glitch { animation: shake 0.1s infinite; }
         @keyframes shake {
-            0% { transform: translate(2px, 2px); }
-            50% { transform: translate(-2px, -2px); }
-            100% { transform: translate(1px, -1px); }
+            0% { transform: translate(4px, 0); }
+            50% { transform: translate(-4px, 0); }
+            100% { transform: translate(0, 4px); }
         }
 
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 0, 0, 0.15);
+            background: rgba(255, 0, 0, 0.2);
             pointer-events: none; display: none; z-index: 50;
         }
     </style>
 </head>
-<body onclick="startChaos()">
+<body onclick="startChaos()" onkeydown="startChaos()">
 
-    <div id="console">КРИТИЧЕСКАЯ ОШИБКА. СИСТЕМА ПОВРЕЖДЕНА.<br>НАЖМИТЕ ДЛЯ ВОССТАНОВЛЕНИЯ...</div>
-    <div id="alertBox" class="alert-box">ВНИМАНИЕ: ДОСТУП ПЕРЕХВАЧЕН!</div>
+    <div id="console">
+        [ СИСТЕМА ЗАБЛОКИРОВАНА ]<br>
+        ОБНАРУЖЕНА ПОПЫТКА ВЗЛОМА...<br>
+        НАЖМИТЕ ЛЮБУЮ КЛАВИШУ ДЛЯ АВАРИЙНОЙ ПЕРЕЗАГРУЗКИ
+    </div>
+    
+    <div id="alertBox" class="alert-box">СИСТЕМА УНИЧТОЖЕНА</div>
     <div id="redOverlay" class="overlay"></div>
 
     <script>
@@ -84,83 +88,74 @@
         
         let isRunning = false;
 
-        
-        const imageUrls = [
-            "photo_babai", 
-            "photo_cookie", 
-            "photo_general",
-            "1_photo",
-            "2_photo",
-            "3_photo",
-            "4_photo",
-            "5_photo",
-            "6_photo"
-            
-        ];
+        const imageUrls = ["1_photo", "2_photo", "3_photo", "4_photo", "5_photo", "6_photo"];
 
         const phrases = [
-            "CONNECTING TO DARK_NET_NODE...", "OVERHEATING DETECTED!", "UPLOADING PERSONAL_DATA.ZIP", 
-            "BYPASSING KERNEL SECURITY...", "EXTRACTING CRYPTO_KEYS...", "ERROR: FAN_FAILURE",
-            "DELETING ALL CONTACTS...", "SHUTDOWN PREVENTED BY REMOTE HOST", "01001000 01000001 01000011 01001011"
+            "CRITICAL_FAILURE", "ВНИМАНИЕ: ПРОЦЕССОР 1488°C", "DUMPING_MEMORY...", 
+            "EXTRACTING_BANK_TOKENS...", "IP_FOUND: 184.22.109.11", "CAMERA_LINK_ESTABLISHED",
+            "УДАЛЕНИЕ ВСЕХ ФАЙЛОВ...", "ОТПРАВКА СКРИНШОТОВ НА СЕРВЕР", "MALWARE_DEPLOYED",
+            "БЛОКИРОВКА КЛАВИАТУРЫ...", "ФОРМАТИРОВАНИЕ ДИСКА C:/", "ВНИМАНИЕ: ВЫСЛАН НАРЯД ПОЛИЦИИ"
         ];
 
-        function playGlitchSound(ctx) {
+        function playSound(ctx) {
             setInterval(() => {
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.connect(gain); gain.connect(ctx.destination);
                 osc.type = Math.random() > 0.5 ? 'sawtooth' : 'square';
-                osc.frequency.setValueAtTime(Math.random() * 1200 + 100, ctx.currentTime);
-                gain.gain.setValueAtTime(0.03, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.1);
-                osc.start(); osc.stop(ctx.currentTime + 0.1);
-            }, 150);
+                osc.frequency.setValueAtTime(Math.random() * 2000 + 100, ctx.currentTime);
+                gain.gain.setValueAtTime(0.05, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.08);
+                osc.start(); osc.stop(ctx.currentTime + 0.08);
+            }, 100);
         }
-
-        function createFlyingImage() {
+            function createImg() {
             if (imageUrls.length === 0) return;
             const img = document.createElement('img');
             img.src = imageUrls[Math.floor(Math.random() * imageUrls.length)];
             img.classList.add('flying-image');
-            img.style.width = (Math.random() * 150 + 80) + "px";
-            img.style.left = Math.random() * 80 + "vw";
-            img.style.top = Math.random() * 80 + "vh";
-            img.style.transform = `rotate(${Math.random() * 360}deg)`;
+            img.style.width = (Math.random() * 200 + 100) + "px";
+            img.style.left = Math.random() * 90 + "vw";
+            img.style.top = Math.random() * 90 + "vh";
+            img.style.transform = rotate(${Math.random() * 360}deg);
             body.appendChild(img);
             setTimeout(() => img.classList.add('show'), 10);
-            setTimeout(() => { img.classList.remove('show'); setTimeout(() => img.remove(), 500); }, 2500);
+            setTimeout(() => { img.remove(); }, 2000);
         }
 
         function startChaos() {
             if (isRunning) return;
             isRunning = true;
             consoleDiv.innerHTML = "";
-            
-            
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            playGlitchSound(audioCtx);
 
-            
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            playSound(audioCtx);
+
             setInterval(() => {
                 const p = document.createElement('div');
-                p.innerText = Math.random() > 0.8 ? phrases[Math.floor(Math.random() * phrases.length)] : Math.random().toString(36).substring(2, 15);
+                p.innerText = Math.random() > 0.4 ? phrases[Math.floor(Math.random() * phrases.length)] : "0x" + Math.random().toString(16).toUpperCase().substring(2, 10);
                 consoleDiv.appendChild(p);
                 window.scrollTo(0, document.body.scrollHeight);
-                if (navigator.vibrate) navigator.vibrate(40);
-            }, 60);
+                if (navigator.vibrate) navigator.vibrate(60);
+                
+                if(consoleDiv.childNodes.length > 100) consoleDiv.removeChild(consoleDiv.firstChild);
+            }, 30);
 
-            
             setInterval(() => {
                 body.classList.toggle('glitch');
                 overlay.style.display = (Math.random() > 0.7) ? 'block' : 'none';
-                if (Math.random() > 0.9) {
+                if (Math.random() > 0.92) {
                     alertBox.style.display = 'block';
-                    setTimeout(() => alertBox.style.display = 'none', 600);
+                    alertBox.innerText = phrases[Math.floor(Math.random() * phrases.length)];
+                    setTimeout(() => alertBox.style.display = 'none', 500);
                 }
-            }, 200);
+            }, 120);
 
-            
-            setInterval(() => { if (Math.random() > 0.5) createFlyingImage(); }, 800);
+            setInterval(() => { if (Math.random() > 0.4) createImg(); }, 700);
         }
     </script>
 </body>
