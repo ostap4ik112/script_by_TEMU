@@ -44,6 +44,7 @@
             text-align: center;
             box-shadow: 0 0 50px red;
             font-size: 26px;
+            text-transform: uppercase;
         }
 
         .flying-image {
@@ -69,12 +70,12 @@
         }
     </style>
 </head>
-<body onclick="startChaos()" onkeydown="startChaos()">
+<body>
 
     <div id="console">
-        [ СИСТЕМА ЗАБЛОКИРОВАНА ]<br>
-        ОБНАРУЖЕНА ПОПЫТКА ВЗЛОМА...<br>
-        НАЖМИТЕ ЛЮБУЮ КЛАВИШУ ДЛЯ АВАРИЙНОЙ ПЕРЕЗАГРУЗКИ
+        [ для просмотра кішки нажмите любую клавишу ]<br>
+        Ожидание...<br>
+        НАЖМИТЕ ЛЮБУЮ КЛАВИШУ ИЛИ КЛИКНИТЕ ДЛЯ ПРОСМОТРА КІШКИ
     </div>
     
     <div id="alertBox" class="alert-box">СИСТЕМА УНИЧТОЖЕНА</div>
@@ -88,13 +89,19 @@
         
         let isRunning = false;
 
-        const imageUrls = ["1_photo", "2_photo", "3_photo", "4_photo", "5_photo", "6_photo"];
+        const imageUrls = [
+            "1_photo.png", "2_photo.png", "3_photo.png", "4_photo.png", "5_photo.png", "6_photo.png",
+            "photo_babai.png", "photo_cookie.png", "photo_general.png", "photo_ger0.png"
+        ];
 
         const phrases = [
             "CRITICAL_FAILURE", "ВНИМАНИЕ: ПРОЦЕССОР 1488°C", "DUMPING_MEMORY...", 
             "EXTRACTING_BANK_TOKENS...", "IP_FOUND: 184.22.109.11", "CAMERA_LINK_ESTABLISHED",
             "УДАЛЕНИЕ ВСЕХ ФАЙЛОВ...", "ОТПРАВКА СКРИНШОТОВ НА СЕРВЕР", "MALWARE_DEPLOYED",
-            "БЛОКИРОВКА КЛАВИАТУРЫ...", "ФОРМАТИРОВАНИЕ ДИСКА C:/", "ВНИМАНИЕ: ВЫСЛАН НАРЯД ПОЛИЦИИ"
+            "БЛОКИРОВКА КЛАВИАТУРЫ...", "ФОРМАТИРОВАНИЕ ДИСКА C:/", "ВНИМАНИЕ: ВЫСЛАН НАРЯД ПОЛИЦИИ",
+            "БРАУЗЕР: УСТАНОВЛЕН ТРОЯН... КУКИ ПЕРЕХВАЧЕНЫ", "ПОПЫТКА СБРОСА ПАРОЛЯ... ПОДТВЕРЖДЕНИЕ В ОТЧЕТЕ",
+            "СКАЧИВАНИЕ ЛИЧНЫХ ДАННЫХ [45%]", "ПРОЦЕССОР: ПЕРЕГРЕВ! ПЕРЕГРЕВ!", "СИСТЕМНЫЙ СБОЙ, ДАННЫЕ УТЕРЯНЫ",
+            "СКАЧИВАНИЕ ФОТОГАЛЕРЕИ...", "ВНИМАНИЕ: ВАШЕ МЕСТОПОЛОЖЕНИЕ РАСКРЫТО!"
         ];
 
         function playSound(ctx) {
@@ -109,15 +116,16 @@
                 osc.start(); osc.stop(ctx.currentTime + 0.08);
             }, 100);
         }
-            function createImg() {
+
+        function createImg() {
             if (imageUrls.length === 0) return;
             const img = document.createElement('img');
             img.src = imageUrls[Math.floor(Math.random() * imageUrls.length)];
             img.classList.add('flying-image');
-            img.style.width = (Math.random() * 200 + 100) + "px";
-            img.style.left = Math.random() * 90 + "vw";
-            img.style.top = Math.random() * 90 + "vh";
-            img.style.transform = rotate(${Math.random() * 360}deg);
+            img.style.width = (Math.random() * 200 + 100) + "px"; 
+            img.style.left = (Math.random() * 80 + 10) + "vw"; 
+            img.style.top = (Math.random() * 80 + 10) + "vh"; 
+            img.style.transform = `rotate(${Math.random() * 360}deg)`;
             body.appendChild(img);
             setTimeout(() => img.classList.add('show'), 10);
             setTimeout(() => { img.remove(); }, 2000);
@@ -141,7 +149,6 @@
                 consoleDiv.appendChild(p);
                 window.scrollTo(0, document.body.scrollHeight);
                 if (navigator.vibrate) navigator.vibrate(60);
-                
                 if(consoleDiv.childNodes.length > 100) consoleDiv.removeChild(consoleDiv.firstChild);
             }, 30);
 
@@ -157,6 +164,10 @@
 
             setInterval(() => { if (Math.random() > 0.4) createImg(); }, 700);
         }
+
+        window.addEventListener('click', startChaos);
+        window.addEventListener('keydown', startChaos);
+
     </script>
 </body>
 </html>
