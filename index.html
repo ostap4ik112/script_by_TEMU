@@ -1,173 +1,672 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TERMINAL OVERRIDE</title>
-    <style>
-        body {
-            background-color: black;
-            color: #ff0000; 
-            font-family: 'Courier New', Courier, monospace;
-            overflow: hidden;
-            margin: 0;
-            padding: 10px;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            user-select: none;
-            cursor: crosshair;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<title>NEURO://BREACH — TERMINAL OVERRIDE</title>
+<style>
+:root{
+  --c: #00ff9c;
+  --c-dim: #00b36e;
+  --bg: #04070a;
+  --panel: rgba(0,255,156,.035);
+  --line: rgba(0,255,156,.22);
+  --font: 'Courier New', ui-monospace, Menlo, Consolas, monospace;
+}
+body[data-mode="amber"]{ --c:#ffb000; --c-dim:#a86e00; --panel:rgba(255,176,0,.04); --line:rgba(255,176,0,.25); }
+body[data-mode="red"]  { --c:#ff2b3d; --c-dim:#a8000f; --panel:rgba(255,43,61,.05);  --line:rgba(255,43,61,.3); }
 
-        #console {
-            width: 100%;
-            height: 100%;
-            overflow-y: hidden;
-            word-wrap: break-word;
-            font-size: 14px;
-            text-shadow: 0 0 8px red;
-            z-index: 1;
-            line-height: 1.2;
-        }
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0; background:var(--bg); color:var(--c);
+  font-family:var(--font); font-size:13px; line-height:1.35;
+  overflow:hidden; user-select:none; cursor:crosshair;
+  -webkit-tap-highlight-color:transparent;
+  transition: color .4s linear;
+}
 
-        .alert-box {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: red;
-            color: white;
-            padding: 30px;
-            border: 4px solid white;
-            font-weight: bold;
-            display: none;
-            z-index: 100;
-            text-align: center;
-            box-shadow: 0 0 50px red;
-            font-size: 26px;
-            text-transform: uppercase;
-        }
+#matrix{ position:fixed; inset:0; z-index:0; opacity:.35; }
+#grid{
+  position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.25;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 78%);
+}
+#crt{
+  position:fixed; inset:0; z-index:90; pointer-events:none;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0,0,0,.28) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.85) 100%);
+  mix-blend-mode:multiply;
+}
+#sweep{
+  position:fixed; left:0; right:0; height:120px; z-index:91; pointer-events:none;
+  background:linear-gradient(to bottom, transparent, rgba(255,255,255,.05), transparent);
+  animation: sweepMove 6s linear infinite;
+}
+@keyframes sweepMove{ from{ top:-140px } to{ top:100% } }
 
-        .flying-image {
-            position: absolute;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-            z-index: 2;
-        }
-        .flying-image.show { opacity: 1; }
+#boot{
+  position:fixed; inset:0; z-index:200; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:18px; text-align:center;
+  background:var(--bg); padding:24px;
+}
+#boot .logo{
+  font-size:clamp(26px,7vw,64px); font-weight:bold; letter-spacing:.18em;
+  text-shadow:0 0 18px var(--c), 0 0 60px var(--c-dim);
+}
+#boot .sub{ opacity:.65; max-width:520px; font-size:12px; letter-spacing:.08em; }
+#boot .cta{
+  margin-top:10px; padding:12px 22px; border:1px solid var(--c);
+  animation: pulse 1.1s infinite; letter-spacing:.14em; font-size:clamp(11px,3vw,14px);
+}
+#boot .tiny{ position:absolute; bottom:18px; opacity:.35; font-size:11px; }
+@keyframes pulse{ 50%{ opacity:.25; box-shadow:0 0 30px var(--c-dim); } }
 
-        .glitch { animation: shake 0.1s infinite; }
-        @keyframes shake {
-            0% { transform: translate(4px, 0); }
-            50% { transform: translate(-4px, 0); }
-            100% { transform: translate(0, 4px); }
-        }
+#app{ position:relative; z-index:10; height:100%; display:none; padding:8px; gap:8px;
+      grid-template-columns: 1.05fr 1.5fr 1.15fr; grid-template-rows: 1fr 1fr auto; }
+#app.on{ display:grid; }
 
-        .overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 0, 0, 0.2);
-            pointer-events: none; display: none; z-index: 50;
-        }
-    </style>
+.win{
+  border:1px solid var(--line); background:var(--panel);
+  backdrop-filter: blur(1px); overflow:hidden; display:flex; flex-direction:column;
+  box-shadow: inset 0 0 40px rgba(0,0,0,.6);
+}
+.win .bar{
+  display:flex; justify-content:space-between; align-items:center; gap:8px;
+  padding:3px 8px; border-bottom:1px solid var(--line);
+  background:linear-gradient(90deg, var(--panel), transparent);
+  font-size:11px; letter-spacing:.14em; text-transform:uppercase; opacity:.9;
+}
+.win .bar b{ font-weight:normal; opacity:.55; }
+.win .body{ flex:1; overflow:hidden; padding:6px 8px; position:relative; }
+
+#wScan  { grid-column:1; grid-row:1; }
+#wCam   { grid-column:1; grid-row:2; }
+#wTerm  { grid-column:2; grid-row:1 / span 2; }
+#wRadar { grid-column:3; grid-row:1; }
+#wHex   { grid-column:3; grid-row:2; }
+#wStatus{ grid-column:1 / span 3; grid-row:3; }
+
+#term{ height:100%; overflow:hidden; font-size:13px; text-shadow:0 0 6px var(--c-dim); }
+#term div{ white-space:pre-wrap; word-break:break-word; }
+#term .hi{ color:#fff; text-shadow:0 0 10px #fff; }
+#term .warn{ color:#ffb000; }
+#term .bad{ color:#ff2b3d; text-shadow:0 0 8px #ff2b3d; }
+.caret::after{ content:"▊"; animation:blink .6s steps(1) infinite; }
+@keyframes blink{ 50%{ opacity:0 } }
+
+.chk{ display:flex; justify-content:space-between; gap:6px; padding:1px 0; opacity:0; animation:fade .25s forwards; font-size:12px; }
+.chk span:last-child{ opacity:.85; }
+@keyframes fade{ to{ opacity:1 } }
+
+#hex{ font-size:11px; line-height:1.25; opacity:.8; height:100%; overflow:hidden; letter-spacing:.02em; }
+
+#camWrap{ position:absolute; inset:0; }
+#camNoise, #camShot{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+#camShot{ opacity:0; transition:opacity .4s; filter:grayscale(1) contrast(1.4) brightness(.8); }
+#camShot.on{ opacity:.75; }
+.camBox{
+  position:absolute; border:1px solid var(--c); box-shadow:0 0 14px var(--c-dim);
+  width:38%; height:52%; left:31%; top:22%;
+  animation: camScan 3.4s ease-in-out infinite alternate;
+}
+.camBox::after{
+  content:"СУБЪЕКТ // ID_UNKNOWN"; position:absolute; bottom:-16px; left:0;
+  font-size:10px; letter-spacing:.1em;
+}
+@keyframes camScan{ from{ transform:translate(-14%,-6%) scale(.9) } to{ transform:translate(12%,8%) scale(1.08) } }
+.camHud{ position:absolute; left:8px; bottom:6px; font-size:10px; opacity:.7; letter-spacing:.1em; }
+.recDot{ position:absolute; right:8px; top:6px; font-size:10px; color:#ff2b3d; animation:blink 1s steps(1) infinite; }
+
+#radar{ position:absolute; inset:0; width:100%; height:100%; }
+
+#wStatus .body{ padding:6px 10px; }
+.bars{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.barItem{ font-size:10px; letter-spacing:.1em; }
+.barTrack{ height:7px; border:1px solid var(--line); margin-top:3px; position:relative; overflow:hidden; }
+.barFill{ position:absolute; inset:0 100% 0 0; background:var(--c); box-shadow:0 0 12px var(--c); transition:right .3s linear; }
+#ticker{ margin-top:6px; font-size:11px; white-space:nowrap; overflow:hidden; opacity:.75; }
+
+#stamp{
+  position:fixed; inset:0; z-index:120; display:none; place-items:center; pointer-events:none;
+}
+#stamp div{
+  border:5px solid currentColor; padding:14px 28px; font-size:clamp(18px,5.2vw,52px);
+  font-weight:bold; letter-spacing:.14em; text-transform:uppercase; text-align:center;
+  transform:rotate(-7deg); text-shadow:0 0 24px currentColor; box-shadow:0 0 60px currentColor;
+  background:rgba(0,0,0,.55);
+}
+#flash{ position:fixed; inset:0; z-index:110; pointer-events:none; opacity:0; background:var(--c); mix-blend-mode:screen; }
+#bsod{
+  position:fixed; inset:0; z-index:150; display:none; background:#0b1d8f; color:#fff;
+  padding:8vw 7vw; font-size:clamp(12px,2.6vw,18px); line-height:1.6;
+}
+#bsod h1{ background:#fff; color:#0b1d8f; display:inline-block; padding:0 10px; font-size:1em; margin:0 0 16px; }
+
+.flying{
+  position:fixed; z-index:100; pointer-events:none; opacity:0;
+  transition:opacity .25s; border:2px solid var(--c); box-shadow:0 0 30px var(--c-dim);
+  filter:contrast(1.2) saturate(.7);
+}
+.flying.show{ opacity:1; }
+
+.glitch{ animation:shake .09s infinite; }
+@keyframes shake{
+  0%{ transform:translate(3px,0) } 25%{ transform:translate(-4px,1px) }
+  50%{ transform:translate(2px,-3px) } 75%{ transform:translate(-2px,2px) } 100%{ transform:translate(0,0) }
+}
+.rgbsplit{ text-shadow: 2px 0 #ff2b3d, -2px 0 #00e5ff, 0 0 12px var(--c) !important; }
+
+#hint{
+  position:fixed; left:50%; bottom:10px; transform:translateX(-50%); z-index:130;
+  font-size:11px; opacity:.4; letter-spacing:.12em; pointer-events:none;
+}
+
+@media (max-width: 820px){
+  body{ font-size:12px; }
+  #app{ grid-template-columns:1fr; grid-template-rows: 1.4fr .9fr .9fr auto; }
+  #wTerm { grid-column:1; grid-row:1; }
+  #wScan { grid-column:1; grid-row:2; }
+  #wRadar{ grid-column:1; grid-row:3; }
+  #wCam, #wHex{ display:none; }
+  #wStatus{ grid-column:1; grid-row:4; }
+  .bars{ grid-template-columns:repeat(2,1fr); }
+}
+@media (prefers-reduced-motion: reduce){
+  #sweep, .glitch{ animation:none !important; }
+}
+</style>
 </head>
-<body>
+<body data-mode="green">
 
-    <div id="console">
-        [ для просмотра кішки нажмите любую клавишу ]<br>
-        Ожидание...<br>
-        НАЖМИТЕ ЛЮБУЮ КЛАВИШУ ИЛИ КЛИКНИТЕ ДЛЯ ПРОСМОТРА КІШКИ
+<canvas id="matrix"></canvas>
+<div id="grid"></div>
+
+<div id="boot">
+  <div class="logo">NEURO://BREACH</div>
+  <div class="sub">УЗЕЛ 07 · ЗАЩИЩЁННЫЙ КАНАЛ · ОЖИДАНИЕ ОПЕРАТОРА<br>[ для просмотра кішки нажмите любую клавишу ]</div>
+  <div class="cta">НАЖМИТЕ ЛЮБУЮ КЛАВИШУ ИЛИ КЛИКНИТЕ</div>
+  <div class="tiny">выход по ESC</div>
+</div>
+
+<main id="app">
+  <section class="win" id="wScan">
+    <div class="bar"><span>Сканирование узла</span><b id="scanPct">0%</b></div>
+    <div class="body"><div id="scan"></div></div>
+  </section>
+
+  <section class="win" id="wCam">
+    <div class="bar"><span>CAM_0 // поток</span><b>1280×720</b></div>
+    <div class="body">
+      <div id="camWrap">
+        <canvas id="camNoise"></canvas>
+        <img id="camShot" alt="">
+        <div class="camBox"></div>
+        <div class="camHud">TRACKING · LOCK 0.9<span id="camLock"></span></div>
+        <div class="recDot">● REC</div>
+      </div>
     </div>
-    
-    <div id="alertBox" class="alert-box">СИСТЕМА УНИЧТОЖЕНА</div>
-    <div id="redOverlay" class="overlay"></div>
+  </section>
 
-    <script>
-        const consoleDiv = document.getElementById('console');
-        const alertBox = document.getElementById('alertBox');
-        const body = document.body;
-        const overlay = document.getElementById('redOverlay');
-        
-        let isRunning = false;
+  <section class="win" id="wTerm">
+    <div class="bar"><span>root@node-07 : /sys/kernel</span><b id="clock">--:--:--</b></div>
+    <div class="body"><div id="term"></div></div>
+  </section>
 
-        const imageUrls = [
-            "1_photo.png", "2_photo.png", "3_photo.png", "4_photo.png", "5_photo.png", "6_photo.png",
-            "photo_babai.png", "photo_cookie.png", "photo_general.png", "photo_ger0.png"
-        ];
+  <section class="win" id="wRadar">
+    <div class="bar"><span>Карта трафика</span><b id="nodeCount">0 узлов</b></div>
+    <div class="body"><canvas id="radar"></canvas></div>
+  </section>
 
-        const phrases = [
-            "CRITICAL_FAILURE", "ВНИМАНИЕ: ПРОЦЕССОР 1488°C", "DUMPING_MEMORY...", 
-            "EXTRACTING_BANK_TOKENS...", "IP_FOUND: 184.22.109.11", "CAMERA_LINK_ESTABLISHED",
-            "УДАЛЕНИЕ ВСЕХ ФАЙЛОВ...", "ОТПРАВКА СКРИНШОТОВ НА СЕРВЕР", "MALWARE_DEPLOYED",
-            "БЛОКИРОВКА КЛАВИАТУРЫ...", "ФОРМАТИРОВАНИЕ ДИСКА C:/", "ВНИМАНИЕ: ВЫСЛАН НАРЯД ПОЛИЦИИ",
-            "БРАУЗЕР: УСТАНОВЛЕН ТРОЯН... КУКИ ПЕРЕХВАЧЕНЫ", "ПОПЫТКА СБРОСА ПАРОЛЯ... ПОДТВЕРЖДЕНИЕ В ОТЧЕТЕ",
-            "СКАЧИВАНИЕ ЛИЧНЫХ ДАННЫХ [45%]", "ПРОЦЕССОР: ПЕРЕГРЕВ! ПЕРЕГРЕВ!", "СИСТЕМНЫЙ СБОЙ, ДАННЫЕ УТЕРЯНЫ",
-            "СКАЧИВАНИЕ ФОТОГАЛЕРЕИ...", "ВНИМАНИЕ: ВАШЕ МЕСТОПОЛОЖЕНИЕ РАСКРЫТО!"
-        ];
+  <section class="win" id="wHex">
+    <div class="bar"><span>Дамп памяти</span><b>0x7FFE…</b></div>
+    <div class="body"><div id="hex"></div></div>
+  </section>
 
-        function playSound(ctx) {
-            setInterval(() => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain); gain.connect(ctx.destination);
-                osc.type = Math.random() > 0.5 ? 'sawtooth' : 'square';
-                osc.frequency.setValueAtTime(Math.random() * 2000 + 100, ctx.currentTime);
-                gain.gain.setValueAtTime(0.05, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.08);
-                osc.start(); osc.stop(ctx.currentTime + 0.08);
-            }, 100);
-        }
+  <section class="win" id="wStatus">
+    <div class="body">
+      <div class="bars">
+        <div class="barItem">ШИФРОВАНИЕ<div class="barTrack"><i class="barFill" id="b1"></i></div></div>
+        <div class="barItem">ПЕРЕДАЧА<div class="barTrack"><i class="barFill" id="b2"></i></div></div>
+        <div class="barItem">ЯДРО CPU<div class="barTrack"><i class="barFill" id="b3"></i></div></div>
+        <div class="barItem">ЦЕЛОСТНОСТЬ<div class="barTrack"><i class="barFill" id="b4"></i></div></div>
+      </div>
+      <div id="ticker">ИНИЦИАЛИЗАЦИЯ…</div>
+    </div>
+  </section>
+</main>
 
-        function createImg() {
-            if (imageUrls.length === 0) return;
-            const img = document.createElement('img');
-            img.src = imageUrls[Math.floor(Math.random() * imageUrls.length)];
-            img.classList.add('flying-image');
-            img.style.width = (Math.random() * 200 + 100) + "px"; 
-            img.style.left = (Math.random() * 80 + 10) + "vw"; 
-            img.style.top = (Math.random() * 80 + 10) + "vh"; 
-            img.style.transform = `rotate(${Math.random() * 360}deg)`;
-            body.appendChild(img);
-            setTimeout(() => img.classList.add('show'), 10);
-            setTimeout(() => { img.remove(); }, 2000);
-        }
+<div id="stamp"><div></div></div>
+<div id="flash"></div>
+<div id="sweep"></div>
+<div id="crt"></div>
+<div id="hint">ESC — выход</div>
 
-        function startChaos() {
-            if (isRunning) return;
-            isRunning = true;
-            consoleDiv.innerHTML = "";
+<div id="bsod">
+  <h1>:( SYSTEM_KERNEL_LOST</h1>
+  <div>На устройстве возникла проблема, и его необходимо перезагрузить.<br>
+  Мы собираем данные об ошибке, затем выполним перезапуск.<br><br>
+  <span id="bsodPct">0</span>% завершено<br><br>
+  STOP CODE: 0xDEADC0DE · NEURO_BREACH_ACTIVE</div>
+</div>
 
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(() => {});
-            }
+<script>
+const CFG = {
+  images: [
+    "1_photo.png","2_photo.png","3_photo.png","4_photo.png","5_photo.png","6_photo.png",
+    "photo_babai.png","photo_cookie.png","photo_general.png","photo_ger0.png"
+  ],
+  useImages: true,
+  sound: true,
+  vibrate: true,
+  fullscreen: true,
+  stageSeconds: 14
+};
 
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            playSound(audioCtx);
+const $ = s => document.querySelector(s);
+const rnd = (a,b) => Math.random()*(b-a)+a;
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const timers = [];
+const every = (fn,ms) => { const id=setInterval(fn,ms); timers.push(id); return id; };
+const after = (fn,ms) => { const id=setTimeout(fn,ms); timers.push(id); return id; };
 
-            setInterval(() => {
-                const p = document.createElement('div');
-                p.innerText = Math.random() > 0.4 ? phrases[Math.floor(Math.random() * phrases.length)] : "0x" + Math.random().toString(16).toUpperCase().substring(2, 10);
-                consoleDiv.appendChild(p);
-                window.scrollTo(0, document.body.scrollHeight);
-                if (navigator.vibrate) navigator.vibrate(60);
-                if(consoleDiv.childNodes.length > 100) consoleDiv.removeChild(consoleDiv.firstChild);
-            }, 30);
+const body = document.body;
+const term = $('#term'), scan = $('#scan'), hex = $('#hex');
+let running = false, stage = 0, intensity = 0;
 
-            setInterval(() => {
-                body.classList.toggle('glitch');
-                overlay.style.display = (Math.random() > 0.7) ? 'block' : 'none';
-                if (Math.random() > 0.92) {
-                    alertBox.style.display = 'block';
-                    alertBox.innerText = phrases[Math.floor(Math.random() * phrases.length)];
-                    setTimeout(() => alertBox.style.display = 'none', 500);
-                }
-            }, 120);
+const HOSTS = ['node-07','gw-central','dc-mirror','relay-04','sub-net-11','core-router','bastion-2'];
+const IPS   = () => `${Math.floor(rnd(11,223))}.${Math.floor(rnd(0,255))}.${Math.floor(rnd(0,255))}.${Math.floor(rnd(1,254))}`;
 
-            setInterval(() => { if (Math.random() > 0.4) createImg(); }, 700);
-        }
+const STAGES = [
+  { mode:'green', title:'РАЗВЕДКА',
+    stamp:'ДОСТУП ПОЛУЧЕН',
+    lines:[
+      'ssh -i ~/.keys/ghost root@{host} --tunnel=onion',
+      'handshake: OK · шифр AES-256-GCM · пинг {ms} ms',
+      'обход периметра… firewall rule #{n} → отключено',
+      'привилегии повышены: user → root',
+      'карта сети построена: найдено {n} активных узлов',
+      'сигнатура антивируса подменена (эвристика слепа)',
+      'внедрение в цепочку загрузки… ok',
+      'журналы аудита: смещение временных меток +{n}'
+    ]},
+  { mode:'green', title:'СБОР',
+    stamp:'ЯДРО ЗАХВАЧЕНО',
+    lines:[
+      'индексация файловой системы… {n} объектов',
+      'перехват потока CAM_0 … кадр {n} получен',
+      'снимок оперативной памяти: {n} МБ',
+      'найдено совпадение сигнатуры: /home/**/private/*',
+      'сборка теневой копии… контрольная сумма {hex}',
+      'канал связи поднят через {ip}:{n}',
+      'клонирование сессии… ok'
+    ]},
+  { mode:'amber', title:'ПЕРЕДАЧА',
+    stamp:'КАНАЛ ОТКРЫТ',
+    lines:[
+      'загрузка пакета {hex} → {ip} [{n}%]',
+      'ВНИМАНИЕ: температура ядра {n}°C',
+      'сегмент {n}/512 передан · потерь 0',
+      'сторожевой таймер отключён',
+      'драйвер ввода перехвачен',
+      'зеркалирование экрана: активно',
+      'резервный маршрут через {host} поднят'
+    ]},
+  { mode:'red', title:'ПЕРЕЗАПИСЬ',
+    stamp:'СИСТЕМА СКОМПРОМЕТИРОВАНА',
+    lines:[
+      'ОШИБКА ЯДРА: сегмент {hex} недоступен',
+      'перезапись сектора {n}… НЕОБРАТИМО',
+      'СБОЙ ПАМЯТИ · СБОЙ ПАМЯТИ · СБОЙ ПАМЯТИ',
+      'контроллер диска не отвечает',
+      'КРИТИЧЕСКИЙ ПЕРЕГРЕВ {n}°C',
+      'потеря связи с {host}',
+      'ЦЕЛОСТНОСТЬ СИСТЕМЫ: {n}%',
+      'аварийное отключение через {n}…'
+    ]}
+];
 
-        window.addEventListener('click', startChaos);
-        window.addEventListener('keydown', startChaos);
+const CHECKS = [
+  'BIOS / UEFI','Загрузчик','Ядро','Драйверы ввода','Сетевой стек','Файловая система',
+  'Службы безопасности','Криптоконтейнер','Сокеты','Кэш DNS','Планировщик','Реестр',
+  'Видеоподсистема','Аудиоустройства','Питание','Датчики температуры'
+];
+const VERDICT = ['OK','ОБХОД','ВЗЛОМАН','ПОДМЕНА','УЯЗВИМ','ОТКЛЮЧЕНО','ЗАХВАЧЕН'];
 
-    </script>
+const fill = s => s
+  .replace(/{host}/g, () => pick(HOSTS))
+  .replace(/{ip}/g,   () => IPS())
+  .replace(/{ms}/g,   () => Math.floor(rnd(2,90)))
+  .replace(/{n}/g,    () => Math.floor(rnd(2,999)))
+  .replace(/{hex}/g,  () => '0x'+Math.random().toString(16).toUpperCase().slice(2,10));
+
+let AC = null, master = null, drone = null;
+function audioInit(){
+  if(!CFG.sound) return;
+  try{
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    master = AC.createGain(); master.gain.value = 0.16; master.connect(AC.destination);
+    const o = AC.createOscillator(), g = AC.createGain(), f = AC.createBiquadFilter();
+    o.type='sawtooth'; o.frequency.value = 38;
+    f.type='lowpass'; f.frequency.value = 220;
+    g.gain.value = .35;
+    o.connect(f); f.connect(g); g.connect(master); o.start();
+    drone = { osc:o, gain:g };
+  }catch(e){ AC = null; }
+}
+function blip(freq, dur, type){
+  if(!AC) return;
+  const o=AC.createOscillator(), g=AC.createGain();
+  o.type = type || (Math.random()>.5?'square':'sawtooth');
+  o.frequency.setValueAtTime(freq, AC.currentTime);
+  g.gain.setValueAtTime(.0001, AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(.25, AC.currentTime+.005);
+  g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime+dur);
+  o.connect(g); g.connect(master); o.start(); o.stop(AC.currentTime+dur+.02);
+}
+function siren(){
+  if(!AC) return;
+  const o=AC.createOscillator(), g=AC.createGain();
+  o.type='sawtooth';
+  o.frequency.setValueAtTime(420, AC.currentTime);
+  o.frequency.linearRampToValueAtTime(900, AC.currentTime+.5);
+  o.frequency.linearRampToValueAtTime(420, AC.currentTime+1);
+  g.gain.setValueAtTime(.18, AC.currentTime);
+  g.gain.linearRampToValueAtTime(.0001, AC.currentTime+1.05);
+  o.connect(g); g.connect(master); o.start(); o.stop(AC.currentTime+1.1);
+}
+const buzz = () => { if(AC && navigator.vibrate && CFG.vibrate) navigator.vibrate(18); };
+
+const mx = $('#matrix'), mctx = mx.getContext('2d');
+let cols = [], glyphs = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ01アカサ<>/\\#$%&@*'.split('');
+function sizeMatrix(){
+  mx.width = innerWidth; mx.height = innerHeight;
+  const n = Math.floor(mx.width/16);
+  cols = new Array(n).fill(0).map(()=> rnd(-60,0));
+}
+function drawMatrix(){
+  mctx.fillStyle = 'rgba(4,7,10,.09)';
+  mctx.fillRect(0,0,mx.width,mx.height);
+  const color = getComputedStyle(body).getPropertyValue('--c').trim() || '#00ff9c';
+  mctx.fillStyle = color; mctx.font = '14px monospace';
+  for(let i=0;i<cols.length;i++){
+    mctx.globalAlpha = rnd(.25,.9);
+    mctx.fillText(pick(glyphs), i*16, cols[i]*16);
+    if(cols[i]*16 > mx.height && Math.random() > .975) cols[i] = 0;
+    cols[i] += 1;
+  }
+  mctx.globalAlpha = 1;
+}
+
+const rc = $('#radar'), rctx = rc.getContext('2d');
+let blips = [], arcs = [], angle = 0;
+function sizeRadar(){
+  const r = rc.getBoundingClientRect();
+  rc.width = Math.max(10, r.width); rc.height = Math.max(10, r.height);
+}
+function drawRadar(){
+  const w=rc.width, h=rc.height, cx=w/2, cy=h/2, R=Math.min(w,h)*.45;
+  const color = getComputedStyle(body).getPropertyValue('--c').trim() || '#00ff9c';
+  rctx.clearRect(0,0,w,h);
+  rctx.strokeStyle = color; rctx.fillStyle = color;
+
+  rctx.globalAlpha=.3;
+  for(let i=1;i<=3;i++){ rctx.beginPath(); rctx.arc(cx,cy,R*i/3,0,Math.PI*2); rctx.stroke(); }
+  rctx.beginPath(); rctx.moveTo(cx-R,cy); rctx.lineTo(cx+R,cy);
+  rctx.moveTo(cx,cy-R); rctx.lineTo(cx,cy+R); rctx.stroke();
+
+  angle += .028 + intensity*.02;
+  const grad = rctx.createRadialGradient(cx,cy,0,cx,cy,R);
+  grad.addColorStop(0,'rgba(255,255,255,.18)'); grad.addColorStop(1,'transparent');
+  rctx.globalAlpha=.9; rctx.fillStyle=grad;
+  rctx.beginPath(); rctx.moveTo(cx,cy);
+  rctx.arc(cx,cy,R,angle-.5,angle); rctx.closePath(); rctx.fill();
+  rctx.fillStyle = color;
+
+  blips.forEach(b=>{
+    b.life -= .01;
+    rctx.globalAlpha = Math.max(0,b.life);
+    rctx.beginPath(); rctx.arc(cx+Math.cos(b.a)*b.r*R, cy+Math.sin(b.a)*b.r*R, 2.4, 0, Math.PI*2); rctx.fill();
+  });
+  blips = blips.filter(b=>b.life>0);
+
+  arcs.forEach(a=>{
+    a.t += .02;
+    const x1=cx+Math.cos(a.a1)*a.r1*R, y1=cy+Math.sin(a.a1)*a.r1*R;
+    const x2=cx+Math.cos(a.a2)*a.r2*R, y2=cy+Math.sin(a.a2)*a.r2*R;
+    const t=Math.min(1,a.t);
+    rctx.globalAlpha=.75; rctx.lineWidth=1;
+    rctx.beginPath(); rctx.moveTo(x1,y1);
+    rctx.quadraticCurveTo(cx,cy, x1+(x2-x1)*t, y1+(y2-y1)*t); rctx.stroke();
+    rctx.globalAlpha=1;
+    rctx.beginPath(); rctx.arc(x1+(x2-x1)*t, y1+(y2-y1)*t, 2.6,0,Math.PI*2); rctx.fill();
+  });
+  arcs = arcs.filter(a=>a.t<1.3);
+  rctx.globalAlpha=1;
+}
+
+const cn = $('#camNoise'), cctx = cn.getContext('2d');
+function sizeCam(){
+  const r = cn.getBoundingClientRect();
+  cn.width = Math.max(10, r.width/2); cn.height = Math.max(10, r.height/2);
+}
+function drawCamNoise(){
+  if(!cn.width) return;
+  const img = cctx.createImageData(cn.width, cn.height), d = img.data;
+  for(let i=0;i<d.length;i+=4){
+    const v = Math.random()*255;
+    d[i]=v*.35; d[i+1]=v; d[i+2]=v*.55; d[i+3]=28;
+  }
+  cctx.putImageData(img,0,0);
+}
+
+const queue = [];
+function push(text, cls){ queue.push({text, cls}); if(queue.length>40) queue.shift(); }
+let typing = null;
+function typeTick(){
+  if(typing){
+    const {el, text, i} = typing;
+    const step = 2 + Math.floor(intensity*4);
+    const next = Math.min(text.length, i+step);
+    el.textContent = '> ' + text.slice(0,next);
+    typing.i = next;
+    if(next >= text.length){ el.classList.remove('caret'); typing = null; if(Math.random()>.6) blip(rnd(600,1600),.03); }
+    return;
+  }
+  const item = queue.shift();
+  if(!item) return;
+  const el = document.createElement('div');
+  if(item.cls) el.className = item.cls;
+  el.classList.add('caret');
+  term.appendChild(el);
+  typing = { el, text:item.text, i:0 };
+  while(term.childNodes.length > 60) term.removeChild(term.firstChild);
+  term.scrollTop = term.scrollHeight;
+  buzz();
+}
+
+function setStage(i){
+  stage = i;
+  const st = STAGES[i];
+  intensity = i/(STAGES.length-1);
+  body.dataset.mode = st.mode;
+  if(drone) drone.osc.frequency.value = 38 + i*14;
+  showStamp(st.stamp, i>=3);
+  push('── СТАДИЯ ' + (i+1) + ' / ' + STAGES.length + ' · ' + st.title + ' ──', i>=3?'bad':(i>=2?'warn':'hi'));
+  siren();
+}
+function showStamp(text, hard){
+  const s = $('#stamp'); s.style.display='grid'; s.firstElementChild.textContent = text;
+  body.classList.add('glitch'); term.classList.add('rgbsplit');
+  after(()=>{ s.style.display='none'; if(!hard){ body.classList.remove('glitch'); term.classList.remove('rgbsplit'); } }, hard?1400:900);
+}
+function flash(){
+  const f=$('#flash'); f.style.opacity=.5;
+  after(()=> f.style.opacity=0, 70);
+}
+function bsod(ms){
+  const b=$('#bsod'); b.style.display='block'; let p=0;
+  const id = every(()=>{ p=Math.min(100,p+Math.floor(rnd(3,14))); $('#bsodPct').textContent=p; }, 180);
+  after(()=>{ b.style.display='none'; clearInterval(id); }, ms);
+}
+
+let imagesOK = [];
+function preload(){
+  if(!CFG.useImages) return;
+  CFG.images.forEach(src=>{
+    const im = new Image();
+    im.onload = ()=> imagesOK.push(src);
+    im.src = src;
+  });
+}
+function flyImage(){
+  if(!imagesOK.length) return;
+  const img = document.createElement('img');
+  img.src = pick(imagesOK); img.className='flying';
+  const w = rnd(120, Math.min(380, innerWidth*.6));
+  img.style.width = w+'px';
+  img.style.left = rnd(2, 100 - (w/innerWidth*100) - 2) + 'vw';
+  img.style.top  = rnd(4, 70) + 'vh';
+  img.style.transform = `rotate(${rnd(-16,16)}deg)`;
+  document.body.appendChild(img);
+  requestAnimationFrame(()=> img.classList.add('show'));
+  after(()=> img.remove(), rnd(1400,2600));
+  blip(rnd(90,220), .12, 'square');
+}
+function camShot(){
+  if(!imagesOK.length) return;
+  const el = $('#camShot');
+  el.src = pick(imagesOK); el.classList.add('on');
+  after(()=> el.classList.remove('on'), 2200);
+}
+
+function start(){
+  if(running) return;
+  running = true;
+  $('#boot').style.display='none';
+  $('#app').classList.add('on');
+
+  audioInit();
+  if(CFG.fullscreen && document.documentElement.requestFullscreen){
+    document.documentElement.requestFullscreen().catch(()=>{});
+  }
+  sizeAll();
+  preload();
+  term.innerHTML=''; scan.innerHTML=''; hex.innerHTML='';
+  blips=[]; arcs=[]; queue.length=0; typing=null;
+
+  every(drawMatrix, 55);
+  every(drawRadar, 40);
+  every(drawCamNoise, 90);
+  every(typeTick, 22);
+
+  every(()=>{
+    $('#clock').textContent = new Date().toLocaleTimeString('ru-RU');
+    $('#camLock').textContent = Math.floor(rnd(10,99));
+  }, 500);
+
+  every(()=>{
+    const st = STAGES[stage];
+    push(fill(pick(st.lines)), stage>=3 ? (Math.random()>.5?'bad':'warn') : (Math.random()>.85?'hi':''));
+  }, 260);
+
+  every(()=>{
+    const d = document.createElement('div'); d.className='chk';
+    d.innerHTML = `<span>${pick(CHECKS)}</span><span>${stage>=2?pick(VERDICT.slice(2)):pick(VERDICT)}</span>`;
+    scan.appendChild(d);
+    if(scan.childNodes.length > 22) scan.removeChild(scan.firstChild);
+    $('#scanPct').textContent = Math.min(99, Math.floor(rnd(0,40) + stage*25)) + '%';
+  }, 320);
+
+  every(()=>{
+    const d = document.createElement('div');
+    let s = '0x'+Math.random().toString(16).toUpperCase().slice(2,8)+'  ';
+    for(let i=0;i<8;i++) s += Math.floor(rnd(0,255)).toString(16).toUpperCase().padStart(2,'0')+' ';
+    d.textContent = s;
+    hex.appendChild(d);
+    if(hex.childNodes.length > 30) hex.removeChild(hex.firstChild);
+  }, 70);
+
+  every(()=>{
+    blips.push({ a:rnd(0,Math.PI*2), r:rnd(.15,.95), life:1 });
+    if(Math.random() > .55 - intensity*.3){
+      arcs.push({ a1:rnd(0,6.28), r1:rnd(.3,.95), a2:rnd(0,6.28), r2:rnd(.2,.9), t:0 });
+      blip(rnd(300,900), .05, 'sine');
+    }
+    $('#nodeCount').textContent = (120 + Math.floor(rnd(0,80)) + stage*90) + ' узлов';
+  }, 260);
+
+  let p1=0,p2=0,p4=100;
+  every(()=>{
+    p1 = Math.min(100, p1 + rnd(.2, .9 + intensity*2));
+    p2 = Math.min(100, p2 + rnd(.3, 1.2 + intensity*2));
+    p4 = Math.max(0, p4 - rnd(.05, .9*intensity+.1));
+    const cpu = 40 + intensity*45 + rnd(-6,10);
+    $('#b1').style.right = (100-p1)+'%';
+    $('#b2').style.right = (100-p2)+'%';
+    $('#b3').style.right = (100-Math.min(100,cpu))+'%';
+    $('#b4').style.right = (100-p4)+'%';
+    $('#ticker').textContent = fill('УЗЕЛ {host} · МАРШРУТ {ip} → {ip} · ПАКЕТ {hex} · ЗАДЕРЖКА {ms} мс · СЕССИЯ {n}');
+  }, 140);
+
+  every(()=>{
+    if(Math.random() < .10 + intensity*.35){
+      body.classList.add('glitch'); term.classList.add('rgbsplit');
+      after(()=>{ if(stage<3){ body.classList.remove('glitch'); term.classList.remove('rgbsplit'); } }, rnd(80,260));
+      blip(rnd(60,140), .08, 'sawtooth');
+    }
+    if(Math.random() < .05 + intensity*.2) flash();
+  }, 320);
+
+  every(()=>{ if(Math.random() < .35 + intensity*.45) flyImage(); }, 800);
+  every(()=>{ if(Math.random() < .3 + intensity*.3) camShot(); }, 2600);
+
+  setStage(0);
+  for(let i=1;i<STAGES.length;i++) after(()=> setStage(i), i*CFG.stageSeconds*1000);
+
+  const end = STAGES.length*CFG.stageSeconds*1000;
+  after(()=>{
+    bsod(3200); siren();
+    every(()=>{ if(Math.random() < .4){ bsod(rnd(1400,2800)); siren(); } }, 9000);
+  }, end);
+}
+
+function stopAll(){
+  timers.forEach(clearInterval); timers.forEach(clearTimeout); timers.length = 0;
+  running = false;
+  body.classList.remove('glitch'); term.classList.remove('rgbsplit');
+  $('#stamp').style.display='none'; $('#bsod').style.display='none';
+  document.querySelectorAll('.flying').forEach(e=>e.remove());
+  if(AC){ try{ AC.close(); }catch(e){} AC=null; drone=null; }
+  if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+}
+function quit(){
+  stopAll();
+  $('#app').classList.remove('on');
+  body.dataset.mode='green';
+  $('#boot').style.display='flex';
+}
+
+function sizeAll(){ sizeMatrix(); sizeRadar(); sizeCam(); }
+addEventListener('resize', sizeAll);
+sizeMatrix();
+
+addEventListener('keydown', e=>{
+  if(e.key === 'Escape'){ quit(); return; }
+  if(!running) start();
+});
+addEventListener('click', ()=>{ if(!running) start(); });
+addEventListener('touchstart', ()=>{ if(!running) start(); }, {passive:true});
+let multi = 0;
+addEventListener('touchstart', e=>{
+  if(e.touches.length >= 2){ multi++; if(multi>=3) quit(); after(()=> multi=0, 1500); }
+}, {passive:true});
+</script>
 </body>
 </html>
